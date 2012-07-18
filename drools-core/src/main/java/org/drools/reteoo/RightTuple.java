@@ -19,10 +19,14 @@ package org.drools.reteoo;
 import org.drools.common.InternalFactHandle;
 import org.drools.core.util.Entry;
 import org.drools.core.util.index.RightTupleList;
+import org.drools.rule.Declaration;
+import org.drools.spi.Tuple;
 
 public class RightTuple
     implements
-    Entry {
+    Entry, Tuple {
+    private static final long serialVersionUID = 9086211737720504362L;
+
     protected InternalFactHandle handle;
 
     private RightTuple           handlePrevious;
@@ -199,5 +203,25 @@ public class RightTuple
 
     public boolean equals(Object object) {
         return equals( (RightTuple) object );
+    }
+
+    public InternalFactHandle get(int pattern) {
+        return pattern == 0 ? this.handle : null;
+    }
+
+    public InternalFactHandle get(Declaration declaration) {
+        return get( declaration.getPattern().getOffset() );
+    }
+
+    public InternalFactHandle[] getFactHandles() {
+        return new InternalFactHandle[] { this.handle };
+    }
+
+    public InternalFactHandle[] toFactHandles() {
+        return new InternalFactHandle[] { this.handle };
+    }
+
+    public int size() {
+        return 1;
     }
 }

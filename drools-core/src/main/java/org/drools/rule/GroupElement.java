@@ -31,23 +31,23 @@ import org.drools.RuntimeDroolsException;
 import org.drools.spi.ObjectType;
 
 public class GroupElement extends ConditionalElement
-    implements
-    Externalizable {
+        implements
+        Externalizable {
 
-    private static final long serialVersionUID     = 510l;
+    private static final long          serialVersionUID     = 510l;
 
-    public static final Type  AND                  = Type.AND;
-    public static final Type  OR                   = Type.OR;
-    public static final Type  NOT                  = Type.NOT;
-    public static final Type  EXISTS               = Type.EXISTS;
+    public static final Type           AND                  = Type.AND;
+    public static final Type           OR                   = Type.OR;
+    public static final Type           NOT                  = Type.NOT;
+    public static final Type           EXISTS               = Type.EXISTS;
 
-    private Type              type                 = null;
-    private List<RuleConditionElement> children    = new ArrayList<RuleConditionElement>();
-    private ObjectType        forallBaseObjectType = null;
-    
-    private boolean           root;
-    
-    private Map<String, Declaration> outerDeclrarations;
+    private Type                       type                 = null;
+    private List<RuleConditionElement> children             = new ArrayList<RuleConditionElement>();
+    private ObjectType                 forallBaseObjectType = null;
+
+    private boolean                    root;
+
+    private Map<String, Declaration>   outerDeclrarations;
 
     public GroupElement() {
         this( Type.AND );
@@ -57,10 +57,11 @@ public class GroupElement extends ConditionalElement
         this.type = type;
     }
 
+    @SuppressWarnings("unchecked")
     public void readExternal(ObjectInput in) throws IOException,
                                             ClassNotFoundException {
         this.type = (Type) in.readObject();
-        children = (List) in.readObject();
+        children = (List<RuleConditionElement>) in.readObject();
     }
 
     public void writeExternal(ObjectOutput out) throws IOException {
@@ -101,11 +102,11 @@ public class GroupElement extends ConditionalElement
     /**
      * @inheritDoc
      */
-    public Map<String,Declaration> getInnerDeclarations() {
+    public Map<String, Declaration> getInnerDeclarations() {
         return this.type.getInnerDeclarations( this.children );
     }
 
-    public Map<String,Declaration> getInnerDeclarations(String consequenceName) {
+    public Map<String, Declaration> getInnerDeclarations(String consequenceName) {
         return this.type.getInnerDeclarations( this.children, consequenceName );
     }
 
@@ -148,16 +149,17 @@ public class GroupElement extends ConditionalElement
      *
      * LogicTransformer does further, more complicated, transformations
      */
-    public void pack() {
-        // we must clone, since we want to iterate only over the original list
-        final Object[] clone = this.children.toArray();
-        for (Object aClone : clone) {
-            // if child is also a group element, there may be
+    public void pack(final RuleConditionElement parent) {
+        if ( parent instanceof GroupElement ) {
+            // if parent is also a group element, there may be
             // some possible clean up / optimizations to be done
-            if (aClone instanceof GroupElement) {
-                final GroupElement childGroup = (GroupElement) aClone;
-                childGroup.pack(this);
-            }
+            packGroupElement( (GroupElement) parent );
+        }
+
+        // we must clone, since we want to iterate only over the original list
+        final RuleConditionElement[] clone = this.children.toArray( new RuleConditionElement[this.children.size()] );
+        for ( RuleConditionElement aClone : clone ) {
+            aClone.pack( this );
         }
 
         // if after packing, this is an AND or OR GE with a single
@@ -168,7 +170,7 @@ public class GroupElement extends ConditionalElement
                 mergeGroupElements( this, (GroupElement) child );
             }
         }
-        
+
         // if after packing, this is a NOT GE with an EXISTS child
         // or this is an EXISTS GE with a NOT child, eliminate the redundant 
         // child and make this a NOT GE
@@ -190,7 +192,8 @@ public class GroupElement extends ConditionalElement
 
     }
 
-    protected void mergeGroupElements(GroupElement parent, GroupElement child) {
+    protected void mergeGroupElements(GroupElement parent,
+                                      GroupElement child) {
         parent.type = child.getType();
         parent.children.clear();
         parent.children.addAll( child.getChildren() );
@@ -199,7 +202,7 @@ public class GroupElement extends ConditionalElement
     /**
      * @param parent
      */
-    public void pack(final GroupElement parent) {
+    public void packGroupElement(final GroupElement parent) {
         if ( this.children.size() == 0 ) {
             // if there is no child, just remove this node
             parent.children.remove( this );
@@ -246,15 +249,14 @@ public class GroupElement extends ConditionalElement
 
                 // otherwise pack itself
             } else {
-                this.pack();
+                this.pack( null );
             }
 
             // also pack itself if it is a NOT
         } else {
-            this.pack();
+            this.pack( null );
         }
     }
-
 
     public boolean equals(final Object object) {
         // Return false if its null or not an instance of ConditionalElement
@@ -273,8 +275,8 @@ public class GroupElement extends ConditionalElement
             return false;
         }
 
-        final List e1Children = this.getChildren();
-        final List e2Children = e2.getChildren();
+        final List<RuleConditionElement> e1Children = this.getChildren();
+        final List<RuleConditionElement> e2Children = e2.getChildren();
         if ( e1Children.size() != e2Children.size() ) {
             return false;
         }
@@ -301,18 +303,18 @@ public class GroupElement extends ConditionalElement
      * @return
      */
     public GroupElement clone() {
-        return clone(true);
+        return clone( true );
     }
 
     public GroupElement cloneOnlyGroup() {
-        return clone(false);
+        return clone( false );
     }
 
     protected GroupElement clone(boolean deepClone) {
         GroupElement cloned = new GroupElement();
         cloned.setType( this.getType() );
         for ( RuleConditionElement re : children ) {
-            cloned.addChild( deepClone && ( re instanceof GroupElement || re instanceof Pattern ) ? re.clone() : re );
+            cloned.addChild( deepClone && (re instanceof GroupElement || re instanceof Pattern) ? re.clone() : re );
         }
         return cloned;
     }
@@ -388,7 +390,7 @@ public class GroupElement extends ConditionalElement
          * visible inside of an element of this type
          */
         private Map<String, Declaration> getInnerDeclarations(List<RuleConditionElement> children) {
-            return getInnerDeclarations(children, Rule.DEFAULT_CONSEQUENCE_NAME);
+            return getInnerDeclarations( children, Rule.DEFAULT_CONSEQUENCE_NAME );
         }
 
         /**
@@ -396,29 +398,33 @@ public class GroupElement extends ConditionalElement
          * visible inside of an element of this type
          * for the consequence with the given name
          */
-        private Map<String, Declaration> getInnerDeclarations(List<RuleConditionElement> children, String consequenceName) {
-            return getDeclarations(children, ScopeDelimiter.NEVER, consequenceName);
+        private Map<String, Declaration> getInnerDeclarations(List<RuleConditionElement> children,
+                                                              String consequenceName) {
+            return getDeclarations( children, ScopeDelimiter.NEVER, consequenceName );
         }
 
         /**
          * Returns a map of declarations that are
          * visible outside of an element of this type
          */
-        private Map<String, Declaration> getOuterDeclarations(List<RuleConditionElement> children, String consequenceName) {
-            return getDeclarations(children, this.scopeDelimiter, consequenceName);
+        private Map<String, Declaration> getOuterDeclarations(List<RuleConditionElement> children,
+                                                              String consequenceName) {
+            return getDeclarations( children, this.scopeDelimiter, consequenceName );
         }
 
-        private Map<String, Declaration> getDeclarations(List<RuleConditionElement> children, ScopeDelimiter scopeDelimiter, String consequenceName) {
+        private Map<String, Declaration> getDeclarations(List<RuleConditionElement> children,
+                                                         ScopeDelimiter scopeDelimiter,
+                                                         String consequenceName) {
             if ( scopeDelimiter == ScopeDelimiter.ALWAYS || children.isEmpty() ) {
-                return Collections.EMPTY_MAP;
+                return Collections.emptyMap();
             } else if ( children.size() == 1 ) {
-                return getOuterDeclarations(children.get(0), consequenceName);
+                return getOuterDeclarations( children.get( 0 ), consequenceName );
             } else {
                 Map<String, Declaration> declarations = new HashMap<String, Declaration>();
                 if ( scopeDelimiter == ScopeDelimiter.NEVER ) {
                     for ( RuleConditionElement rce : children ) {
                         declarations.putAll( getOuterDeclarations( rce, consequenceName ) );
-                        if ( isConsequenceInvoker(rce, consequenceName) ) {
+                        if ( isConsequenceInvoker( rce, consequenceName ) ) {
                             break;
                         }
                     }
@@ -426,14 +432,14 @@ public class GroupElement extends ConditionalElement
                     Iterator<RuleConditionElement> i = children.iterator();
                     RuleConditionElement rce = i.next();
                     Map<String, Declaration> elementDeclarations = getOuterDeclarations( rce, consequenceName );
-                    if ( isConsequenceInvoker(rce, consequenceName) ) {
+                    if ( isConsequenceInvoker( rce, consequenceName ) ) {
                         return elementDeclarations;
                     }
                     declarations.putAll( elementDeclarations );
                     while ( i.hasNext() ) {
                         rce = i.next();
                         elementDeclarations = getOuterDeclarations( rce, consequenceName );
-                        if ( isConsequenceInvoker(rce, consequenceName) ) {
+                        if ( isConsequenceInvoker( rce, consequenceName ) ) {
                             return elementDeclarations;
                         }
                         declarations.keySet().retainAll( elementDeclarations.keySet() );
@@ -443,20 +449,22 @@ public class GroupElement extends ConditionalElement
             }
         }
 
-        private Map<String, Declaration> getOuterDeclarations(RuleConditionElement rce, String consequenceName) {
-            return rce instanceof GroupElement ? ((GroupElement) rce).getOuterDeclarations(consequenceName) : rce.getOuterDeclarations();
+        private Map<String, Declaration> getOuterDeclarations(RuleConditionElement rce,
+                                                              String consequenceName) {
+            return rce instanceof GroupElement ? ((GroupElement) rce).getOuterDeclarations( consequenceName ) : rce.getOuterDeclarations();
         }
 
-        private boolean isConsequenceInvoker(RuleConditionElement rce, String consequenceName) {
+        private boolean isConsequenceInvoker(RuleConditionElement rce,
+                                             String consequenceName) {
             if ( consequenceName == Rule.DEFAULT_CONSEQUENCE_NAME ) {
                 return false;
             }
-            if ( rce instanceof NamedConsequenceInvoker && ((NamedConsequenceInvoker)rce).invokesConsequence(consequenceName) ) {
+            if ( rce instanceof NamedConsequenceInvoker && ((NamedConsequenceInvoker) rce).invokesConsequence( consequenceName ) ) {
                 return true;
             }
             if ( rce instanceof GroupElement ) {
                 for ( RuleConditionElement child : ((GroupElement) rce).getChildren() ) {
-                    if ( isConsequenceInvoker(child, consequenceName) ) {
+                    if ( isConsequenceInvoker( child, consequenceName ) ) {
                         return true;
                     }
                 }

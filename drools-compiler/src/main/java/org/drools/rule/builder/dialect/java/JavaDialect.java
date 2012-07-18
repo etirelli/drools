@@ -47,6 +47,7 @@ import org.drools.lang.descr.PatternDescr;
 import org.drools.lang.descr.ProcessDescr;
 import org.drools.lang.descr.QueryDescr;
 import org.drools.lang.descr.RuleDescr;
+import org.drools.lang.descr.SequenceDescr;
 import org.drools.lang.descr.WindowReferenceDescr;
 import org.drools.rule.Function;
 import org.drools.rule.JavaDialectRuntimeData;
@@ -74,6 +75,7 @@ import org.drools.rule.builder.RuleBuildContext;
 import org.drools.rule.builder.RuleClassBuilder;
 import org.drools.rule.builder.RuleConditionBuilder;
 import org.drools.rule.builder.SalienceBuilder;
+import org.drools.rule.builder.SequenceBuilder;
 import org.drools.rule.builder.WindowReferenceBuilder;
 import org.drools.rule.builder.dialect.asm.*;
 import org.drools.rule.builder.dialect.mvel.MVELEnabledBuilder;
@@ -123,6 +125,7 @@ public class JavaDialect
     protected static GroupElementBuilder         GE_BUILDER                    = new GroupElementBuilder();
     protected static NamedConsequenceBuilder     NAMED_CONSEQUENCE_BUILDER     = new NamedConsequenceBuilder();
     protected static ConditionalBranchBuilder    CONDITIONAL_BRANCH_BUILDER    = new ConditionalBranchBuilder();
+    protected static SequenceBuilder             SEQ_BUILDER                   = new SequenceBuilder();
 
     // a map of registered builders
     private static Map<Class<?>, EngineElementBuilder> builders;
@@ -248,6 +251,9 @@ public class JavaDialect
 
         builders.put( ConditionalBranchDescr.class,
                       CONDITIONAL_BRANCH_BUILDER );
+        
+        builders.put( SequenceDescr.class,
+                      SEQ_BUILDER );
     }
 
     public Map<Class<?>, EngineElementBuilder> getBuilders() {

@@ -76,5 +76,17 @@ public interface RuleConditionElement
      * @return
      */
     public boolean isPatternScopeDelimiter();
+    
+    /**
+     * Optimise the RuleConditionElement subtree by removing redundancies
+     * like an AND inside another AND, OR inside OR, single branches
+     * AND/OR, etc.
+     *
+     * LogicTransformer does further, more complicated, transformations
+     * 
+     * @param parent the parent RuleConditionElement that is recursively 
+     *               invoking the pack() call, or null on the root element
+     */
+    public void pack( final RuleConditionElement parent );    
 
 }

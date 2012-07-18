@@ -16,6 +16,10 @@
 
 package org.drools.lang.api;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+
 import java.util.Collection;
 import java.util.Collections;
 
@@ -38,11 +42,6 @@ import org.drools.runtime.StatefulKnowledgeSession;
 import org.drools.runtime.rule.WorkingMemoryEntryPoint;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
 
 /**
  * DescrBuilderTest
@@ -504,7 +503,50 @@ public class DescrBuilderTest extends CommonTestMethodBase {
 
     }
     
+    @Test
+    public void testEventSequence() throws InstantiationException,
+                                            IllegalAccessException {
+        // A() -> B() => (C() ~> (D() \\ E()))
+        PackageDescr pkg = DescrFactory
+                .newPackage().name("org.drools")
+                .newDeclare().type().name( "String" )
+                    .newAnnotation( "role" ).value( "event" ).end()
+                .end()
+                .newRule().name("from rule")
+                    .lhs()
+                        .strictlyFollowedBy()
+                            .followedBy()
+                                .pattern("String").id( "a", false ).end()
+                                .pattern("String").id( "b", false ).end()
+                            .end()
+                            .looselyFollowedBy()
+                                .pattern("String").id( "c", false ).end()
+                                .independentlyFollowedBy()
+                                    .pattern("String").id( "d", false ).end()
+                                    .pattern( "String" ).id( "e", false ).end()
+                                .end()
+                            .end()
+                        .end()
+                    .end()
+                .rhs("//System.out.println(s);")
+                .end().getDescr();
+
+        Collection<KnowledgePackage> kpkgs = compilePkgDescr( pkg, 2 );
+        
+        KnowledgeBase kbase = KnowledgeBaseFactory.newKnowledgeBase();
+        kbase.addKnowledgePackages( kpkgs );
+        
+        StatefulKnowledgeSession ksession = createKnowledgeSession(kbase);
+        int rules = ksession.fireAllRules();
+        assertEquals( 0, rules );
+    }
+    
     private KnowledgePackage compilePkgDescr( PackageDescr pkg ) {
+        return compilePkgDescr( pkg, 1 ).iterator().next();
+    }
+    
+    
+    private Collection<KnowledgePackage> compilePkgDescr( PackageDescr pkg, int expectedPackages ) {
         KnowledgeBuilder kbuilder = KnowledgeBuilderFactory.newKnowledgeBuilder();
         kbuilder.add( ResourceFactory.newDescrResource( pkg ),
                       ResourceType.DESCR );
@@ -512,10 +554,10 @@ public class DescrBuilderTest extends CommonTestMethodBase {
         assertFalse( kbuilder.getErrors().toString(),
                      kbuilder.hasErrors() );
         Collection<KnowledgePackage> kpkgs = kbuilder.getKnowledgePackages();
-        assertEquals( 1,
+        assertEquals( expectedPackages,
                       kpkgs.size() );
 
-        return kpkgs.iterator().next();
+        return kpkgs;
 
     }
 

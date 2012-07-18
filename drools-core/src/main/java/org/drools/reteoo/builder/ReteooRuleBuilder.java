@@ -43,6 +43,7 @@ import org.drools.rule.NamedConsequence;
 import org.drools.rule.Pattern;
 import org.drools.rule.QueryElement;
 import org.drools.rule.Rule;
+import org.drools.rule.Sequence;
 import org.drools.rule.WindowDeclaration;
 import org.drools.rule.WindowReference;
 import org.drools.time.TemporalDependencyMatrix;
@@ -80,6 +81,8 @@ public class ReteooRuleBuilder implements RuleBuilder {
                                new NamedConsequenceBuilder() );
         this.utils.addBuilder( ConditionalBranch.class,
                                new ConditionalBranchBuilder() );
+        this.utils.addBuilder( Sequence.class,
+                               new SequenceBuilder() );
     }
 
     /**

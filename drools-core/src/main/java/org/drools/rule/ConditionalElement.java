@@ -21,5 +21,24 @@ public abstract class ConditionalElement
     RuleConditionElement {
 
     public abstract ConditionalElement clone();
+    
+    /**
+     * Helper method
+     */
+    public void pack() {
+        pack( null );
+    }
+    
+    /**
+     * Optimize the group element subtree by removing redundancies
+     * like an AND inside another AND, OR inside OR, single branches
+     * AND/OR, etc.
+     *
+     * LogicTransformer does further, more complicated, transformations
+     */
+    public void pack(final RuleConditionElement parent) {
+        // by default, nothing to do
+    }
+    
 
 }

@@ -31,6 +31,7 @@ import org.drools.lang.descr.ConditionalElementDescr;
 import org.drools.lang.descr.ExistsDescr;
 import org.drools.lang.descr.NotDescr;
 import org.drools.lang.descr.OrDescr;
+import org.drools.lang.descr.SequenceDescr;
 
 /**
  * An implementation for the CEDescrBuilder
@@ -163,4 +164,52 @@ public class CEDescrBuilderImpl<P extends DescrBuilder< ? , ? >, T extends Annot
         ((ConditionalElementDescr) descr).addDescr(conditionalBranch.getDescr());
         return conditionalBranch;
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    public CEDescrBuilder<CEDescrBuilder<P, T>, SequenceDescr> followedBy() {
+        SequenceDescr seqDescr = new SequenceDescr();
+        ((ConditionalElementDescr) descr).addDescr( seqDescr );
+        CEDescrBuilder<CEDescrBuilder<P, T>, SequenceDescr> seq = new CEDescrBuilderImpl<CEDescrBuilder<P, T>, SequenceDescr>( this,
+                                                                                                                               seqDescr );
+        return seq;
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    public CEDescrBuilder<CEDescrBuilder<P, T>, SequenceDescr> strictlyFollowedBy() {
+        SequenceDescr seqDescr = new SequenceDescr();
+        seqDescr.setType( SequenceDescr.SequenceType.STRICTLY_FOLLOWED_BY );
+        ((ConditionalElementDescr) descr).addDescr( seqDescr );
+        CEDescrBuilder<CEDescrBuilder<P, T>, SequenceDescr> seq = new CEDescrBuilderImpl<CEDescrBuilder<P, T>, SequenceDescr>( this,
+                                                                                                                               seqDescr );
+        return seq;
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    public CEDescrBuilder<CEDescrBuilder<P, T>, SequenceDescr> looselyFollowedBy() {
+        SequenceDescr seqDescr = new SequenceDescr();
+        seqDescr.setType( SequenceDescr.SequenceType.LOOSELY_FOLLOWED_BY );
+        ((ConditionalElementDescr) descr).addDescr( seqDescr );
+        CEDescrBuilder<CEDescrBuilder<P, T>, SequenceDescr> seq = new CEDescrBuilderImpl<CEDescrBuilder<P, T>, SequenceDescr>( this,
+                                                                                                                               seqDescr );
+        return seq;
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    public CEDescrBuilder<CEDescrBuilder<P, T>, SequenceDescr> independentlyFollowedBy() {
+        SequenceDescr seqDescr = new SequenceDescr();
+        seqDescr.setType( SequenceDescr.SequenceType.IND_FOLLOWED_BY );
+        ((ConditionalElementDescr) descr).addDescr( seqDescr );
+        CEDescrBuilder<CEDescrBuilder<P, T>, SequenceDescr> seq = new CEDescrBuilderImpl<CEDescrBuilder<P, T>, SequenceDescr>( this,
+                                                                                                                               seqDescr );
+        return seq;
+    }
+    
 }

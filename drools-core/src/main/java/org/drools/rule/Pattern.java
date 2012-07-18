@@ -20,7 +20,13 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.drools.base.ClassObjectType;
 import org.drools.factmodel.AnnotationDefinition;
@@ -28,9 +34,9 @@ import org.drools.reteoo.NodeTypeEnums;
 import org.drools.rule.constraint.MvelConstraint;
 import org.drools.spi.AcceptsClassObjectType;
 import org.drools.spi.Constraint;
+import org.drools.spi.Constraint.ConstraintType;
 import org.drools.spi.ObjectType;
 import org.drools.spi.PatternExtractor;
-import org.drools.spi.Constraint.ConstraintType;
 
 public class Pattern
     implements
@@ -441,5 +447,9 @@ public class Pattern
 
     public void setAnnotations( Map<String, AnnotationDefinition> annotations ) {
         this.annotations = annotations;
+    }
+
+    public void pack(RuleConditionElement parent) {
+        // nothing to do
     }
 }

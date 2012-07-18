@@ -195,6 +195,18 @@ INCR	:	'++'
 ARROW
     :	'->'
     ;
+    
+EQ_ARROW
+    : '=>'
+    ;
+    
+TD_ARROW    
+    : '~>'
+    ;
+    
+DOUBLE_BACK_SLASH
+    : '\\\\'
+    ;    
 
 SEMICOLON
     :	';'

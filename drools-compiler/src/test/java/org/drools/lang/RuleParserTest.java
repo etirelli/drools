@@ -58,6 +58,7 @@ import org.drools.lang.descr.PackageDescr;
 import org.drools.lang.descr.PatternDescr;
 import org.drools.lang.descr.QueryDescr;
 import org.drools.lang.descr.RuleDescr;
+import org.drools.lang.descr.SequenceDescr;
 import org.drools.lang.descr.TypeDeclarationDescr;
 import org.drools.lang.descr.TypeFieldDescr;
 import org.drools.lang.descr.WindowDeclarationDescr;
@@ -4140,6 +4141,150 @@ public class RuleParserTest extends TestCase {
                       pd.getObjectType() );
         assertEquals( "Y",
                       pd.getSource().getText() );
+    }
+
+    @Test
+    public void testFollowedBy() throws Exception {
+        final String text = "package org.drools\n" +
+                            "rule X\n" +
+                            "when\n" +
+                            "    A() -> B() -> (C() -> (D() and E()))\n" +
+                            "then\n" +
+                            "end\n";
+        PackageDescr pkg = (PackageDescr) parse( "compilationUnit",
+                                                 text );
+
+        assertEquals( "org.drools",
+                      pkg.getName() );
+        assertEquals( 1,
+                      pkg.getRules().size() );
+
+        RuleDescr rd = pkg.getRules().get(0);
+
+        assertEquals( "X",
+                      rd.getName() );
+        assertEquals( 1,
+                      rd.getLhs().getDescrs().size() );
+        
+        SequenceDescr seq = (SequenceDescr) rd.getLhs().getDescrs().get(0);
+        assertEquals( SequenceDescr.SequenceType.FOLLOWED_BY, 
+                      seq.getType() );
+
+        assertEquals( 3,
+                      seq.getDescrs().size() );
+        
+        PatternDescr pd = (PatternDescr) seq.getDescrs().get(0);
+        assertNotNull( pd );
+        assertEquals( "A",
+                      pd.getObjectType() );
+        
+        pd = (PatternDescr) seq.getDescrs().get(1);
+        assertNotNull( pd );
+        assertEquals( "B",
+                      pd.getObjectType() );
+        
+        SequenceDescr seq2 = (SequenceDescr) seq.getDescrs().get(2);
+        assertEquals( SequenceDescr.SequenceType.FOLLOWED_BY, 
+                      seq2.getType() );
+        assertEquals( 2,
+                      seq2.getDescrs().size() );
+        
+        pd = (PatternDescr) seq2.getDescrs().get(0);
+        assertNotNull( pd );
+        assertEquals( "C",
+                      pd.getObjectType() );
+        
+        AndDescr and = (AndDescr) seq2.getDescrs().get( 1 );
+        assertNotNull( and );
+        assertEquals( 2,
+                      and.getDescrs().size() );
+        
+        pd = (PatternDescr) and.getDescrs().get(0);
+        assertNotNull( pd );
+        assertEquals( "D",
+                      pd.getObjectType() );
+        
+        pd = (PatternDescr) and.getDescrs().get(1);
+        assertNotNull( pd );
+        assertEquals( "E",
+                      pd.getObjectType() );
+        
+    }
+
+    @Test
+    public void testMultipleFollowedBy() throws Exception {
+        final String text = "package org.drools\n" +
+                            "rule X\n" +
+                            "when\n" +
+                            "    A() -> B() => (C() ~> (D() \\\\ E()))\n" +
+                            "then\n" +
+                            "end\n";
+        PackageDescr pkg = (PackageDescr) parse( "compilationUnit",
+                                                 text );
+
+        assertEquals( "org.drools",
+                      pkg.getName() );
+        assertEquals( 1,
+                      pkg.getRules().size() );
+
+        RuleDescr rd = pkg.getRules().get(0);
+
+        assertEquals( "X",
+                      rd.getName() );
+        assertEquals( 1,
+                      rd.getLhs().getDescrs().size() );
+        
+        SequenceDescr seq = (SequenceDescr) rd.getLhs().getDescrs().get(0);
+        assertEquals( SequenceDescr.SequenceType.STRICTLY_FOLLOWED_BY, 
+                      seq.getType() );
+
+        assertEquals( 2,
+                      seq.getDescrs().size() );
+        
+        SequenceDescr seq2 = (SequenceDescr) seq.getDescrs().get(0);
+        assertEquals( SequenceDescr.SequenceType.FOLLOWED_BY, 
+                      seq2.getType() );
+        assertEquals( 2,
+                      seq2.getDescrs().size() );
+
+        PatternDescr pd = (PatternDescr) seq2.getDescrs().get(0);
+        assertNotNull( pd );
+        assertEquals( "A",
+                      pd.getObjectType() );
+        
+        pd = (PatternDescr) seq2.getDescrs().get(1);
+        assertNotNull( pd );
+        assertEquals( "B",
+                      pd.getObjectType() );
+        
+        seq2 = (SequenceDescr) seq.getDescrs().get(1);
+        assertEquals( SequenceDescr.SequenceType.LOOSELY_FOLLOWED_BY, 
+                      seq2.getType() );
+        assertEquals( 2,
+                      seq2.getDescrs().size() );
+        
+        pd = (PatternDescr) seq2.getDescrs().get(0);
+        assertNotNull( pd );
+        assertEquals( "C",
+                      pd.getObjectType() );
+        
+        SequenceDescr seq3 = (SequenceDescr) seq2.getDescrs().get( 1 );
+        assertNotNull( seq3 );
+        assertEquals( SequenceDescr.SequenceType.IND_FOLLOWED_BY, 
+                      seq3.getType() );
+        assertEquals( 2,
+                      seq3.getDescrs().size() );
+        
+        pd = (PatternDescr) seq3.getDescrs().get(0);
+        assertNotNull( pd );
+        assertEquals( "D",
+                      pd.getObjectType() );
+        
+        pd = (PatternDescr) seq3.getDescrs().get(1);
+        assertNotNull( pd );
+        assertEquals( "E",
+                      pd.getObjectType() );
+        
     }
 
     private Object parse( final String parserRuleName,
