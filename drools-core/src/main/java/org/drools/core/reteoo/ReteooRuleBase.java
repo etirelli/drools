@@ -1125,6 +1125,7 @@ public class ReteooRuleBase
                                                                                  true,
                                                                                  null,
                                                                                  null ) );
+            session.executeQueuedActions();
             return session;
         } finally {
             readUnlock();
