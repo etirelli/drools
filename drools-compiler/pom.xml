@@ -57,8 +57,20 @@
     </dependency>
     <dependency>
       <groupId>org.antlr</groupId>
+      <artifactId>ST4</artifactId>
+      <version>4.0.8</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.antlr</groupId>
       <artifactId>antlr</artifactId>
-      <scope>provided</scope>
+      <version>3.5.2</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.antlr</groupId>
+          <artifactId>ST4</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.antlr</groupId>

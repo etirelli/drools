@@ -16,11 +16,7 @@
 
 package org.drools.compiler.lang.api;
 
-import org.drools.compiler.lang.descr.AndDescr;
-import org.drools.compiler.lang.descr.AnnotatedBaseDescr;
-import org.drools.compiler.lang.descr.ExistsDescr;
-import org.drools.compiler.lang.descr.NotDescr;
-import org.drools.compiler.lang.descr.OrDescr;
+import org.drools.compiler.lang.descr.*;
 
 /**
  *  A descriptor builder for Conditional Elements
@@ -93,4 +89,32 @@ public interface CEDescrBuilder<P extends DescrBuilder<?, ?>, T extends Annotate
      * @return a descriptor builder for the Conditional Branch CE
      */
     ConditionalBranchDescrBuilder<CEDescrBuilder<P, T>> conditionalBranch();
+
+    /**
+     * Defines a sequence of events
+     *
+     * @return a descriptor builder for the Followed By (->) CE
+     */
+    public CEDescrBuilder<CEDescrBuilder<P, T> , SequenceDescr> followedBy();
+
+    /**
+     * Defines a strict sequence of events
+     *
+     * @return a descriptor builder for the Strictly Followed By (=>) CE
+     */
+    public CEDescrBuilder<CEDescrBuilder<P, T> , SequenceDescr> strictlyFollowedBy();
+
+    /**
+     * Defines a loose sequence of events
+     *
+     * @return a descriptor builder for the Loosely Followed By (~>) CE
+     */
+    public CEDescrBuilder<CEDescrBuilder<P, T> , SequenceDescr> looselyFollowedBy();
+
+    /**
+     * Defines an independent sequence of events
+     *
+     * @return a descriptor builder for the Independently Followed By (\\) CE
+     */
+    public CEDescrBuilder<CEDescrBuilder<P, T> , SequenceDescr> independentlyFollowedBy();
 }

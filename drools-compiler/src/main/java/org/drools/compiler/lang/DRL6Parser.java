@@ -52,23 +52,7 @@ import org.drools.compiler.lang.api.RuleDescrBuilder;
 import org.drools.compiler.lang.api.TypeDeclarationDescrBuilder;
 import org.drools.compiler.lang.api.UnitDescrBuilder;
 import org.drools.compiler.lang.api.WindowDeclarationDescrBuilder;
-import org.drools.compiler.lang.descr.AndDescr;
-import org.drools.compiler.lang.descr.AttributeDescr;
-import org.drools.compiler.lang.descr.BaseDescr;
-import org.drools.compiler.lang.descr.ConditionalElementDescr;
-import org.drools.compiler.lang.descr.EntryPointDeclarationDescr;
-import org.drools.compiler.lang.descr.EnumDeclarationDescr;
-import org.drools.compiler.lang.descr.ExistsDescr;
-import org.drools.compiler.lang.descr.FunctionDescr;
-import org.drools.compiler.lang.descr.GlobalDescr;
-import org.drools.compiler.lang.descr.ImportDescr;
-import org.drools.compiler.lang.descr.NotDescr;
-import org.drools.compiler.lang.descr.OrDescr;
-import org.drools.compiler.lang.descr.PackageDescr;
-import org.drools.compiler.lang.descr.RuleDescr;
-import org.drools.compiler.lang.descr.TypeDeclarationDescr;
-import org.drools.compiler.lang.descr.UnitDescr;
-import org.drools.compiler.lang.descr.WindowDeclarationDescr;
+import org.drools.compiler.lang.descr.*;
 import org.drools.core.util.StringUtils;
 import org.kie.internal.builder.conf.LanguageLevelOption;
 
@@ -2223,8 +2207,8 @@ public class DRL6Parser extends AbstractDRLParser implements DRLParser {
     }
 
     /**
-     * lhsAnd := LEFT_PAREN AND lhsUnary+ RIGHT_PAREN
-     *         | lhsUnary (AND lhsUnary)*
+     * lhsAnd := LEFT_PAREN AND lhsSeq+ RIGHT_PAREN
+     *         | lhsUnary (AND lhsSeq)*
      *
      * @param ce
      * @throws org.antlr.runtime.RecognitionException
@@ -2271,7 +2255,7 @@ public class DRL6Parser extends AbstractDRLParser implements DRLParser {
                     helper.emit(Location.LOCATION_LHS_BEGIN_OF_CONDITION_AND_OR);
                 }
                 while (input.LA(1) != DRL6Lexer.RIGHT_PAREN) {
-                    lhsUnary(and,
+                    lhsSeq(and,
                             allowOr);
                     if (state.failed)
                         return null;
@@ -2303,7 +2287,7 @@ public class DRL6Parser extends AbstractDRLParser implements DRLParser {
                         null);
             }
             try {
-                lhsUnary(and,
+                lhsSeq(and,
                         allowOr);
                 if (state.failed)
                     return null;
@@ -2338,7 +2322,7 @@ public class DRL6Parser extends AbstractDRLParser implements DRLParser {
                         if (state.backtracking == 0) {
                             helper.emit(Location.LOCATION_LHS_BEGIN_OF_CONDITION_AND_OR);
                         }
-                        lhsUnary(and,
+                        lhsSeq(and,
                                 allowOr);
                         if (state.failed)
                             return null;
@@ -2361,6 +2345,110 @@ public class DRL6Parser extends AbstractDRLParser implements DRLParser {
             }
         }
         return result;
+    }
+
+    /**
+     * lhsSeq := lhsUnary (sequenceOp annotation* lhsUnary)*
+     *
+     * @param ce
+     * @throws RecognitionException
+     */
+    private BaseDescr lhsSeq(final CEDescrBuilder< ? , ? > ce,
+                             boolean allowOr) throws RecognitionException {
+        BaseDescr result = null;
+
+        // create a Sequence anyway, since if it is not a Sequence we remove it later
+        CEDescrBuilder< ? , SequenceDescr> seq = null;
+        if ( state.backtracking == 0 ) {
+            seq = ce.followedBy();
+            result = seq.getDescr();
+            helper.start( seq,
+                          CEDescrBuilder.class,
+                          null );
+        }
+        try {
+            Token first = input.LT( 1 );
+            lhsUnary( seq,
+                      allowOr );
+            if ( state.failed ) return null;
+
+            int nextToken = input.LA( 1 );
+            if ( isSequenceOperator( nextToken ) ) {
+                if ( state.backtracking == 0 ) {
+                    seq.getDescr().setType( SequenceDescr.SequenceType.resolve( input.LT( 1 ).getText() ) );
+                }
+                while ( input.LA( 1 ) == nextToken ) {
+                    match( input,
+                           nextToken,
+                           null,
+                           null,
+                           DroolsEditorType.SYMBOL );
+                    if ( state.failed ) return null;
+
+                    while ( input.LA( 1 ) == DRL6Lexer.AT ) {
+                        // annotation*
+                        annotation( seq );
+                        if ( state.failed ) return null;
+                    }
+
+                    if ( state.backtracking == 0 ) {
+                        helper.emit( Location.LOCATION_LHS_BEGIN_OF_CONDITION_AND_OR );
+                    }
+                    lhsUnary( seq,
+                              allowOr );
+                    if ( state.failed ) return null;
+
+                    if ( input.LA( 1 ) != nextToken && isSequenceOperator( input.LA( 1 ) ) ) {
+                        // if a different sequence operator is found, tree has to be rearranged
+                        if ( state.backtracking == 0 ) {
+                            helper.end( CEDescrBuilder.class,
+                                        seq );
+                            // remove previous descr from the parent descr
+                            ((ConditionalElementDescr) ce.getDescr()).getDescrs().remove( seq.getDescr() );
+                            // create a new container
+                            CEDescrBuilder< ? , SequenceDescr> temp = ce.followedBy();
+                            temp.getDescr().setType( SequenceDescr.SequenceType.resolve( input.LT( 1 ).getText() ) );
+
+                            // add previous sequence as first element of the new container
+                            temp.getDescr().addDescr( seq.getDescr() );
+                            // switch references to the new container
+                            seq = temp;
+                            result = seq.getDescr();
+                            // update start
+                            helper.start( seq,
+                                          CEDescrBuilder.class,
+                                          null );
+                            // fix the reference to the first token
+                            helper.setStart( seq,
+                                             first );
+                        }
+                        nextToken = input.LA( 1 );
+                    }
+                }
+            } else {
+                if ( state.backtracking == 0 ) {
+                    // if no sequence CE present, then remove it and add children to parent
+                    ((ConditionalElementDescr) ce.getDescr()).getDescrs().remove( seq.getDescr() );
+                    for ( BaseDescr base : seq.getDescr().getDescrs() ) {
+                        ((ConditionalElementDescr) ce.getDescr()).addDescr( base );
+                    }
+                    result = ce.getDescr();
+                }
+            }
+        } finally {
+            if ( state.backtracking == 0 ) {
+                helper.end( CEDescrBuilder.class,
+                            seq );
+            }
+        }
+        return result;
+    }
+
+    private boolean isSequenceOperator(int token) {
+        return token == DRL6Lexer.ARROW ||
+               token == DRL6Lexer.EQ_ARROW ||
+               token == DRL6Lexer.TD_ARROW ||
+               token == DRL6Lexer.DOUBLE_BACK_SLASH;
     }
 
     /**
