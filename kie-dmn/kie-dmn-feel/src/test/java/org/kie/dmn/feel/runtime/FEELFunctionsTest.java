@@ -181,6 +181,7 @@ public class FEELFunctionsTest extends BaseFEELTest {
                 { "any( [] )", false, null},
                 { "any( 0 )", null, FEELEvent.Severity.ERROR},
                 { "any( )", null, FEELEvent.Severity.ERROR},
+                { "before( 10, 20 )", true, null }
         };
         return addAdditionalParameters(cases, false);
     }

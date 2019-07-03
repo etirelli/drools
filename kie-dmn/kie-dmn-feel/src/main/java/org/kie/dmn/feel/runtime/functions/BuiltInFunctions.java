@@ -19,6 +19,7 @@ package org.kie.dmn.feel.runtime.functions;
 import java.util.stream.Stream;
 
 import org.kie.dmn.feel.runtime.FEELFunction;
+import org.kie.dmn.feel.runtime.functions.interval.*;
 
 public class BuiltInFunctions {
 
@@ -66,7 +67,18 @@ public class BuiltInFunctions {
             new NotFunction(),
             new SortFunction(),
             new GetEntriesFunction(),
-            new GetValueFunction()
+            new GetValueFunction(),
+            AfterFunction.INSTANCE,
+            BeforeFunction.INSTANCE,
+            CoincidesFunction.INSTANCE,
+            DuringFunction.INSTANCE,
+            FinishesFunction.INSTANCE,
+            FinishedByFunction.INSTANCE,
+            IncludesFunction.INSTANCE,
+            OverlappedByFunction.INSTANCE,
+            OverlapsFunction.INSTANCE,
+            StartedByFunction.INSTANCE,
+            StartsFunction.INSTANCE
             };
 
     public static FEELFunction[] getFunctions() {
